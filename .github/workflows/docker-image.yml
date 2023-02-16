@@ -1,35 +1,62 @@
-name: Docker Image CI
+name: docker-build-push
 
 on:
   push:
-    branches: [ http_sd ]
+    branches: [ "main", "http_sd" ]
+    tags: [ 'v*.*.*' ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    name: Docker build and publish ${{ matrix.make.name }} (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        rust: [stable]
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+
     steps:
-      -
-        name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v3
-      -
-        name: Login to Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-      -
-        name: Set up Docker Buildx
+
+      - name: Setup Docker buildx
         uses: docker/setup-buildx-action@v2
 
-      - name: Get branch name
-        id: branch-name
-        uses: tj-actions/branch-names@v6
+      - name: Log into registry ${{ env.REGISTRY }}
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      -
-        name: Build and push
+      - name: Extract Docker metadata (ursa)
+        id: ursa-meta
+        uses: docker/metadata-action@v4.0.1
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha
+            type=ref,event=branch
+            type=ref,event=pr,prefix=pr-
+            type=ref,event=tag,prefix=tag-
+            type=raw,value=${{ github.head_ref || github.ref_name }}
+            type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', 'main') }}
+
+      - name: Build and push Docker image (ursa)
+        id: ursa-build-and-push
         uses: docker/build-push-action@v3
         with:
           context: .
-          file: ./Dockerfile
-          push: true
-          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/ursa-exporter:${{ steps.branch-name.outputs.current_branch }}
+          push: ${{ github.ref == 'refs/heads/http_sd' }}
+          tags: ${{ steps.ursa-meta.outputs.tags }}
+          labels: ${{ steps.ursa-meta.outputs.labels }}
