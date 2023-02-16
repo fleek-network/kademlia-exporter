@@ -92,7 +92,12 @@ impl Exporter {
                     identify::Event::Error { .. } => {}
                     identify::Event::Sent { .. } => {}
                     identify::Event::Received { peer_id, info } => {
-                        self.observe_with_address(peer_id, info.listen_addrs).await;
+                        self.observe_with_address(
+                            peer_id,
+                            info.listen_addrs,
+                            Some(info.agent_version),
+                        )
+                        .await;
                         self.node_store
                             .write()
                             .await
@@ -106,15 +111,16 @@ impl Exporter {
             client::ClientEvent::Behaviour(client::MyBehaviourEvent::Kademlia(event)) => {
                 match event {
                     KademliaEvent::RoutablePeer { peer, address } => {
-                        self.observe_with_address(peer, vec![address]).await;
+                        self.observe_with_address(peer, vec![address], None).await;
                     }
                     KademliaEvent::PendingRoutablePeer { peer, address } => {
-                        self.observe_with_address(peer, vec![address]).await;
+                        self.observe_with_address(peer, vec![address], None).await;
                     }
                     KademliaEvent::RoutingUpdated {
                         peer, addresses, ..
                     } => {
-                        self.observe_with_address(peer, addresses.into_vec()).await;
+                        self.observe_with_address(peer, addresses.into_vec(), None)
+                            .await;
                     }
                     _ => {}
                 }
@@ -128,7 +134,12 @@ impl Exporter {
         }
     }
 
-    async fn observe_with_address(&mut self, peer: PeerId, addresses: Vec<Multiaddr>) {
+    async fn observe_with_address(
+        &mut self,
+        peer: PeerId,
+        addresses: Vec<Multiaddr>,
+        agent: Option<String>,
+    ) {
         let mut node = Node::new(peer);
 
         for address in addresses {
@@ -148,6 +159,10 @@ impl Exporter {
             node.country = self.ip_to_country_code(address);
             node.provider = self.ip_to_cloud_provider(address);
             node.geohash = self.ip_to_geohash(address);
+        }
+
+        if let Some(agent) = agent {
+            node.agent = Some(agent);
         }
 
         self.node_store.write().await.observed_node(node);

@@ -185,6 +185,7 @@ pub struct Node {
     pub provider: Option<String>,
     pub address: Option<IpAddr>,
     pub geohash: Option<String>,
+    pub agent: Option<String>,
     last_seen: u64,
     up_since: Option<u64>,
 }
@@ -197,6 +198,7 @@ impl Node {
             provider: None,
             address: None,
             geohash: None,
+            agent: None,
             last_seen: SystemTime::now()
                 .duration_since(UNIX_EPOCH)
                 .unwrap()
@@ -214,6 +216,7 @@ impl Node {
         self.address = other.address.or(self.address);
         self.geohash = other.geohash.or(self.geohash.take());
         self.country = other.country.or(self.country.take());
+        self.agent = other.agent.or(self.agent.take());
 
         self.up_since = self.up_since.take().or(other.up_since);
         if self.last_seen < other.last_seen {

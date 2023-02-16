@@ -96,6 +96,10 @@ impl From<&Node> for PrometheusDiscoveryChunk {
         let mut labels = HashMap::new();
         labels.insert("id".to_string(), node.peer_id.to_string());
 
+        if let Some(agent) = node.agent.clone() {
+            labels.insert("agent".to_string(), agent);
+        }
+
         if let Some(country) = node.country.clone() {
             labels.insert("country_code".into(), country);
         }
