@@ -99,7 +99,7 @@ impl From<&Node> for PrometheusDiscoveryChunk {
         if let Some(country) = node.country.clone() {
             labels.insert("country_code".into(), country);
         }
-        
+
         if let Some(geohash) = node.geohash.clone() {
             labels.insert("geohash".to_string(), geohash);
         }
@@ -111,10 +111,7 @@ impl From<&Node> for PrometheusDiscoveryChunk {
             targets.push(format!("{addr}:4069"));
         }
 
-        PrometheusDiscoveryChunk {
-            targets,
-            labels,
-        }
+        PrometheusDiscoveryChunk { targets, labels }
     }
 }
 

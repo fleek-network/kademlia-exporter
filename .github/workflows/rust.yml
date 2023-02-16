@@ -2,9 +2,9 @@ name: Rust
 
 on:
   push:
-    branches: [ master ]
+    branches: [ http_sd ]
   pull_request:
-    branches: [ master ]
+    branches: [ http_sd ]
 
 env:
   CARGO_TERM_COLOR: always
@@ -25,6 +25,8 @@ jobs:
         toolchain: nightly
         override: true
         components: rustfmt, clippy
+    - name: Format
+      run: cargo +nightly fmt --check
     - name: Build
       run: cargo +nightly build --verbose
     - name: Run tests
