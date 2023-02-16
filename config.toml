@@ -1,14 +1,12 @@
-# max_mind_db_path = "<path to GeoLite2-City.mmdb>"
+max_mind_db_path = "/var/lib/GeoIP/GeoLite2-City.mmdb"
 # cloud_provider_cidr_db_path = "<path to cidrs.csv>"
 
-name = "ipfs"
+name = "ursa"
+protocol_name = "/ursa/kad/0.0.1"
 bootnodes = [
-        "/ip4/139.178.91.71/tcp/4001/p2p/QmNnooDu7bfjPFoTZYxMNLWUQJyrVwtbZg5gBMjTezGAJN",
-        "/ip6/2604:1380:4602:5c00::3/tcp/4001/p2p/QmbLHAnMoJPWSCR5Zhtx6BHJX9KiKNN6tpvbUcqanj75Nb",
-        "/ip6/2604:1380:40e1:9c00::1/udp/4001/quic/p2p/QmcZf59bWwK5XFi76CZX8cbJ4BhTzzA3gU1ZjYZcYW3dwt",
-        "/ip4/104.131.131.82/udp/4001/quic/p2p/QmaCpDMGvV2BGHeYERUEnRQAwe3N8SzbUtfsmvsqQLuvuJ",
+        "/ip4/159.223.211.234/tcp/6009/p2p/12D3KooWDji7xMLia6GAsyr4oiEFD2dd3zSryqNhfxU3Grzs1r9p"
 ]
 disjoint_query_paths = false
-tcp_listen_address = "0.0.0.0:8048"
+tcp_listen_address = "0.0.0.0:6009"
 quic_listen_address = "0.0.0.0:8048"
 quic_v1_listen_address = "0.0.0.0:8049"

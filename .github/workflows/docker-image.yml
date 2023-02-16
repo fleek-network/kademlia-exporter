@@ -31,4 +31,4 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/kademlia-exporter:${{ steps.branch-name.outputs.current_branch }}
+          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/ursa-exporter:${{ steps.branch-name.outputs.current_branch }}
