@@ -3,11 +3,20 @@ use prometheus_client::metrics::counter::Counter;
 use prometheus_client::metrics::family::Family;
 use prometheus_client::metrics::gauge::Gauge;
 use prometheus_client::registry::Registry;
+use serde::Serialize;
+use std::net::IpAddr;
 use std::{
     collections::HashMap,
     convert::TryInto,
-    time::{Duration, Instant},
+    time::{Duration, SystemTime, UNIX_EPOCH},
 };
+
+fn now() -> u64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_secs()
+}
 
 /// Stores information about a set of nodes for a single Dht.
 pub struct NodeStore {
@@ -47,16 +56,15 @@ impl NodeStore {
 
         // Remove old offline nodes.
         let length = self.nodes.len();
-        self.nodes.drain_filter(|_, n| {
-            (Instant::now() - n.last_seen) > Duration::from_secs(60 * 60 * 12)
-        });
+        self.nodes
+            .drain_filter(|_, n| (now() - n.last_seen) > 60 * 60 * 12);
         self.metrics
             .meta_offline_nodes_removed
             .inc_by((length - self.nodes.len()).try_into().unwrap());
     }
 
     fn update_metrics(&self) {
-        let now = Instant::now();
+        let time = now();
 
         //
         // Seen within
@@ -72,9 +80,9 @@ impl NodeStore {
         }
 
         for node in self.nodes.values() {
-            let since_last_seen = now - node.last_seen;
+            let since_last_seen = time - node.last_seen;
             for (time_barrier, countries) in &mut nodes_by_time_by_country_and_provider {
-                if since_last_seen < *time_barrier {
+                if since_last_seen < time_barrier.as_secs() {
                     countries
                         .entry((
                             node.country
@@ -121,7 +129,7 @@ impl NodeStore {
         for node in self.nodes.values() {
             // Safeguard in case exporter is behind on probing every nodes
             // uptime.
-            if Instant::now() - node.last_seen > Duration::from_secs(60 * 60) {
+            if now() - node.last_seen > 60 * 60 {
                 continue;
             }
 
@@ -131,7 +139,7 @@ impl NodeStore {
             };
 
             for (time_barrier, countries) in &mut nodes_by_time_by_country_and_provider {
-                if Instant::now() - up_since > *time_barrier {
+                if now() - up_since > time_barrier.as_secs() {
                     countries
                         .entry((
                             node.country
@@ -170,12 +178,15 @@ impl NodeStore {
     }
 }
 
+#[derive(Serialize)]
 pub struct Node {
     pub peer_id: PeerId,
     pub country: Option<String>,
     pub provider: Option<String>,
-    last_seen: Instant,
-    up_since: Option<Instant>,
+    pub address: Option<IpAddr>,
+    pub geohash: Option<String>,
+    last_seen: u64,
+    up_since: Option<u64>,
 }
 
 impl Node {
@@ -184,25 +195,27 @@ impl Node {
             peer_id,
             country: None,
             provider: None,
-            last_seen: Instant::now(),
-            up_since: Some(Instant::now()),
+            address: None,
+            geohash: None,
+            last_seen: SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs(),
+            up_since: Some(
+                SystemTime::now()
+                    .duration_since(UNIX_EPOCH)
+                    .unwrap()
+                    .as_secs(),
+            ),
         }
     }
 
-    pub fn with_country(mut self, country: String) -> Self {
-        self.country = Some(country);
-        self
-    }
-
-    pub fn with_cloud_provider(mut self, provider: String) -> Self {
-        self.provider = Some(provider);
-        self
-    }
-
     fn merge(&mut self, other: Node) {
-        self.country = self.country.take().or(other.country);
-        self.up_since = self.up_since.take().or(other.up_since);
+        self.address = other.address.or(self.address);
+        self.geohash = other.geohash.or(self.geohash.take());
+        self.country = other.country.or(self.country.take());
 
+        self.up_since = self.up_since.take().or(other.up_since);
         if self.last_seen < other.last_seen {
             self.last_seen = other.last_seen;
         }

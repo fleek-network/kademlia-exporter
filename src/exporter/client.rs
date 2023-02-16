@@ -120,7 +120,7 @@ impl Client {
     }
 
     pub fn dial(&mut self, peer_id: &PeerId) -> Result<bool, DialError> {
-        if Swarm::is_connected(&mut self.swarm, peer_id) {
+        if Swarm::is_connected(&self.swarm, peer_id) {
             Ok(false)
         } else {
             self.swarm.dial(*peer_id)?;
