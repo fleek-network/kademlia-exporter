@@ -1,16 +1,11 @@
-## Kademlia Exporter
+## Ursa Exporter
 
-Exporter exposing [Prometheus](https://prometheus.io/) metrics for
-[libp2p](https://github.com/libp2p/) Kademlia distributed hash tables.
+> Forked from @mxinden's [Kademlia Exporter](https://github.com/mxinden/kademlia-exporter).
 
-
-![Number of nodes](./.assets/number-of-nodes.png)
-
-![Random node lookup](./.assets/random-node-lookup.png)
-
+Exposes [Prometheus](https://prometheus.io/) metrics and http service discovery for
+[Ursa](https://github.com/fleek-network/ursa), using it's Kademlia DHT.
 
 *Information below is likely outdated. Code is the source of truth.*
-
 
 ### Quickstart
 
@@ -18,8 +13,9 @@ Exporter exposing [Prometheus](https://prometheus.io/) metrics for
 cargo +nightly run -- --config-file config.toml
 
 curl localhost:8080/metrics
-```
 
+curl localhost:8080/http_sd
+```
 
 ### Ip localization
 
@@ -27,14 +23,12 @@ Optionally the exporter can estimate a peers location through the [Max Mind Geo
 DB](https://dev.maxmind.com/geoip/geoip2/geolite2/#Autonomous_System_Numbers).
 See `max_mind_db_path` parameter in `config.toml`.
 
-
 ### Cloud provider
 
 Optionally the exporter can estimate the cloud provider a peer is hosted in via
 a list of CIDRs. See `.assets/cidrs.r` to generate a list and
 `cloud_provider_cidr_db_path` parameter in `config.toml` to specify the
 generated `.csv` file.
-
 
 ### Metrics
 
