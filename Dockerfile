@@ -1,5 +1,5 @@
 FROM rustlang/rust:nightly-bullseye as builder
-WORKDIR /usr/src/kademlia-exporter
+WORKDIR /usr/src/ursa-exporter
 
 RUN apt-get update && apt-get install -y cmake protobuf-compiler
 
@@ -20,5 +20,5 @@ RUN touch ./src/main.rs
 RUN cargo +nightly build --release
 
 FROM debian:bullseye-slim
-COPY --from=builder /usr/src/kademlia-exporter/target/release/kademlia-exporter /usr/local/bin/kademlia-exporter
-ENTRYPOINT [ "kademlia-exporter"]
+COPY --from=builder /usr/src/ursa-exporter/target/release/ursa-exporter /usr/local/bin/ursa-exporter
+ENTRYPOINT [ "ursa-exporter"]
